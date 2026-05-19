@@ -245,7 +245,7 @@ export const en: Dict = {
     'Open Design must be running for MCP tool calls to succeed. If you started your coding agent before opening Open Design, restart the agent so it can reach the live daemon.',
 
   'entry.tabDesigns': 'Designs',
-  'entry.tabExamples': 'Examples',
+  'entry.tabTemplates': 'Templates',
   'entry.tabDesignSystems': 'Design systems',
   'entry.tabConnectors': 'Connectors',
   'entry.openSettingsTitle': 'Settings',
