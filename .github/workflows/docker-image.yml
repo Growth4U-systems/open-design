@@ -3,10 +3,12 @@ name: Docker image
 # Phase 5 / spec §15.5 — multi-arch image builds.
 #
 # Pushes to ghcr.io on:
+#   - push to main    → ghcr.io/<owner>/od:edge + :sha-<short>
 #   - tag (v*.*.*)    → ghcr.io/<owner>/od:<tag> + :latest
 
 on:
   push:
+    branches: [main]
     tags: ['v*.*.*']
 
 jobs:
