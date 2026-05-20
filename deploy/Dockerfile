@@ -68,9 +68,24 @@ RUN pnpm --filter @open-design/daemon build && \
 
 FROM ${RUNTIME_IMAGE}
 
+# Growth4U fork — bake the Claude Code CLI into the runtime so per-tenant
+# cloud deployments expose a working "Local CLI" out of the box (the
+# daemon scans PATH for agent binaries via runtimes/detection.ts; without
+# `claude` on PATH the Settings panel reports "no agent" even though the
+# whole point of the deployment is to provide one). Auth comes from
+# ANTHROPIC_API_KEY at runtime — `claude login` is impossible in a
+# headless container, so env.ts honors OD_CLAUDE_PRESERVE_API_KEY=1 to
+# keep the key in the spawn env. We pin the CLI version so image rebuilds
+# are reproducible; bump deliberately when upstream ships a feature we
+# need.
+ARG CLAUDE_CODE_VERSION=2.0.42
 RUN apk add --no-cache tini poppler-utils && \
     addgroup -S -g 1001 open-design && \
-    adduser -S -D -H -u 1001 -G open-design open-design
+    adduser -S -D -u 1001 -G open-design -h /home/open-design open-design && \
+    mkdir -p /home/open-design && \
+    chown -R open-design:open-design /home/open-design && \
+    npm install -g --no-audit --no-fund @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} && \
+    npm cache clean --force
 
 WORKDIR /app
 COPY --from=build --chown=open-design:open-design /app/deploy/daemon ./apps/daemon
@@ -95,6 +110,11 @@ ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=192
 ENV OD_BIND_HOST=0.0.0.0
 ENV OD_PORT=7456
+# Growth4U fork — point HOME at the writable /tmp tmpfs so the baked-in
+# `claude` CLI can drop session/cache files (`~/.claude/`) without the
+# read-only rootfs rejecting it. Real auth comes from ANTHROPIC_API_KEY
+# at runtime, so losing /tmp on restart is harmless.
+ENV HOME=/tmp
 
 EXPOSE 7456
 
